@@ -1,11 +1,12 @@
-# Les Jeudis d'Orange — marché nocturne et animations en centre-ville d'Orange.
+# Les Jeudis d'Orange — grand marché nocturne et animations en centre-ville.
+# Programme 2026 : jeudis 6, 13, 20 et 27 août, à partir de 18h, accès libre.
 # Source : https://www.ville-orange.fr/article2431.html
-# Taxonomie OEDB : culture.market.night (événement programmé).
+# Taxonomie OEDB : culture.market.night — un événement distinct par soirée.
 
 - id: jeudis-orange-2026-08-06
   what: culture.market.night
   type: scheduled
-  label: "Les Jeudis d'Orange — marché nocturne et animations (centre-ville)"
+  label: "Jeudis d'Orange — jeudi 6 août (marché nocturne)"
   start: 2026-08-06T18:00:00+02:00
   stop: 2026-08-06T23:30:00+02:00
   lon: 4.8075
@@ -13,12 +14,12 @@
   source: https://www.ville-orange.fr/article2431.html
   tags:
     commune: Orange
-    lieu: "Centre-ville, place de la République"
+    lieu: "Centre-ville"
 
 - id: jeudis-orange-2026-08-13
   what: culture.market.night
   type: scheduled
-  label: "Les Jeudis d'Orange — marché nocturne et animations (centre-ville)"
+  label: "Jeudis d'Orange — jeudi 13 août (marché nocturne)"
   start: 2026-08-13T18:00:00+02:00
   stop: 2026-08-13T23:30:00+02:00
   lon: 4.8075
@@ -26,12 +27,12 @@
   source: https://www.ville-orange.fr/article2431.html
   tags:
     commune: Orange
-    lieu: "Centre-ville, place de la République"
+    lieu: "Centre-ville"
 
 - id: jeudis-orange-2026-08-20
   what: culture.market.night
   type: scheduled
-  label: "Les Jeudis d'Orange — marché nocturne et animations (centre-ville)"
+  label: "Jeudis d'Orange — jeudi 20 août (marché nocturne)"
   start: 2026-08-20T18:00:00+02:00
   stop: 2026-08-20T23:30:00+02:00
   lon: 4.8075
@@ -39,12 +40,12 @@
   source: https://www.ville-orange.fr/article2431.html
   tags:
     commune: Orange
-    lieu: "Centre-ville, place de la République"
+    lieu: "Centre-ville"
 
 - id: jeudis-orange-2026-08-27
   what: culture.market.night
   type: scheduled
-  label: "Les Jeudis d'Orange — marché nocturne et animations (centre-ville)"
+  label: "Jeudis d'Orange — jeudi 27 août (marché nocturne)"
   start: 2026-08-27T18:00:00+02:00
   stop: 2026-08-27T23:30:00+02:00
   lon: 4.8075
@@ -52,4 +53,4 @@
   source: https://www.ville-orange.fr/article2431.html
   tags:
     commune: Orange
-    lieu: "Centre-ville, place de la République"
+    lieu: "Centre-ville"

@@ -10,7 +10,8 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use roxmltree::Node;
 
-use crate::model::{Event, EventKind, VAUCLUSE_BBOX};
+use crate::boundary;
+use crate::model::{Event, EventKind};
 
 pub const DEFAULT_FEED_URL: &str =
     "http://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/Evenementiel-DIR/grt/RRN/content.xml";
@@ -162,8 +163,9 @@ fn sanitize_id(raw: &str) -> String {
 
 fn record_to_event(record: Node, now: DateTime<Utc>) -> Option<Event> {
     let (lon, lat) = first_point(record)?;
-    let (lon_min, lat_min, lon_max, lat_max) = VAUCLUSE_BBOX;
-    if lon < lon_min || lon > lon_max || lat < lat_min || lat > lat_max {
+    // The national feed also carries events from neighbouring departments; keep
+    // only those genuinely inside the Vaucluse boundary (not just its bbox).
+    if !boundary::contains(lon, lat) {
         return None;
     }
 

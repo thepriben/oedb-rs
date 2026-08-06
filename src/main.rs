@@ -10,6 +10,7 @@
 //! - `GITHUB_TOKEN`       token used to read event issues (optional)
 //! - `GITHUB_REPOSITORY`  issues repository (default `thepriben/oedb-rs`)
 
+mod boundary;
 mod emit;
 mod ingest;
 mod model;
