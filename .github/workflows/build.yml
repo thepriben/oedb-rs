@@ -45,7 +45,7 @@ jobs:
         run: |
           git config user.name "thepriben"
           git config user.email "benoit.prieur@gmail.com"
-          git add events/from-issues
+          git add --all -- events/from-issues || true
           if ! git diff --cached --quiet; then
             git commit -m "data: persist approved issue events"
             git push
