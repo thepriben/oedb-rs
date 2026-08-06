@@ -1,0 +1,61 @@
+name: Build & Deploy
+
+on:
+  schedule:
+    # Toutes les 3 h, comme les données temps réel de dataroads-FR84.
+    - cron: "23 */3 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  issues: read
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Sur événement issue, ne construire que lors de la pose du label `approved`.
+    if: github.event_name != 'issues' || github.event.label.name == 'approved'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+      - name: Générer l'API statique
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: cargo run --locked --release -- --out dist
+      - name: Persister les événements issus des issues
+        run: |
+          git config user.name "thepriben"
+          git config user.email "benoit.prieur@gmail.com"
+          git add events/from-issues
+          if ! git diff --cached --quiet; then
+            git commit -m "data: persist approved issue events"
+            git push
+          fi
+      - name: Configurer Pages
+        uses: actions/configure-pages@v5
+      - name: Publier l'artefact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Déployer sur GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

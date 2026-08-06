@@ -1,0 +1,76 @@
+name: Proposer un événement
+description: Soumettre un événement OEDB pour le Vaucluse (FR-84). Après modération (label `approved`), il sera intégré au prochain build.
+title: "[event] "
+labels: ["event"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci ! Renseignez les champs ci-dessous. Les dates sont au format ISO 8601
+        (`2026-08-13T18:00:00+02:00`) et la position doit être dans le Vaucluse.
+        Le formulaire de https://thepriben.github.io/oedb-rs/ pré-remplit ces champs.
+  - type: input
+    id: label
+    attributes:
+      label: Titre de l'événement
+      placeholder: "Marché nocturne d'Orange"
+    validations:
+      required: true
+  - type: dropdown
+    id: what
+    attributes:
+      label: Catégorie (what)
+      description: Taxonomie OpenEventDatabase
+      options:
+        - culture.market.night
+        - culture.festival
+        - sport.race
+        - traffic.roadwork
+        - traffic.accident
+        - traffic.jam
+        - traffic.hazard
+        - traffic.info
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Type
+      options:
+        - scheduled
+        - unscheduled
+      default: 0
+  - type: input
+    id: start
+    attributes:
+      label: Début (ISO 8601)
+      placeholder: "2026-08-13T18:00:00+02:00"
+  - type: input
+    id: stop
+    attributes:
+      label: Fin (ISO 8601)
+      placeholder: "2026-08-13T23:00:00+02:00"
+  - type: input
+    id: lat
+    attributes:
+      label: Latitude
+      placeholder: "44.1380"
+    validations:
+      required: true
+  - type: input
+    id: lon
+    attributes:
+      label: Longitude
+      placeholder: "4.8075"
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source (URL)
+      placeholder: "https://www.ville-orange.fr/article2431.html"
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      placeholder: Détails complémentaires (facultatif)

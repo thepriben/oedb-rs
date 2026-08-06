@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>oedb-rs — Instance OpenEventDatabase statique du Vaucluse (FR-84)</title>
+    <meta name="description" content="Instance OpenEventDatabase statique pour le Vaucluse : événements routiers Bison Futé et événements culturels, générés en Rust et servis par GitHub Pages.">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        :root {
+            --ink: #1F2937;
+            --muted: #6B7280;
+            --accent: #4F46E5;
+            --bg: #F9FAFB;
+            --card: #FFFFFF;
+            --border: #E5E7EB;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--ink);
+            background: var(--bg);
+            line-height: 1.6;
+        }
+        header {
+            background: linear-gradient(135deg, #312E81, #4F46E5);
+            color: #fff;
+            padding: 40px 24px 32px;
+        }
+        header h1 { margin: 0 0 8px; font-size: 1.7rem; }
+        header p { margin: 0; opacity: 0.9; max-width: 720px; }
+        main { max-width: 960px; margin: 0 auto; padding: 24px; }
+        section { margin-bottom: 32px; }
+        h2 { font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+        code, pre {
+            background: #EEF2FF;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.88em;
+        }
+        code { padding: 2px 6px; }
+        pre { padding: 12px 16px; overflow-x: auto; }
+        table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+        th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+        th { background: #EEF2FF; }
+        #map { height: 380px; border-radius: 10px; border: 1px solid var(--border); }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 14px;
+        }
+        .form-grid label { display: block; font-weight: 600; font-size: 0.86rem; margin-bottom: 4px; }
+        .form-grid input, .form-grid select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.92rem;
+        }
+        .hint { color: var(--muted); font-size: 0.85rem; }
+        .btn {
+            display: inline-block;
+            margin-top: 16px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn:hover { background: #4338CA; }
+        footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 24px; }
+        a { color: var(--accent); }
+    </style>
+</head>
+<body>
+<header>
+    <h1>oedb-rs — événements du Vaucluse (FR-84)</h1>
+    <p>
+        Instance <a href="https://github.com/openeventdatabase/backend" style="color:#C7D2FE;">OpenEventDatabase</a>
+        statique, générée en Rust et servie par GitHub Pages : événements routiers
+        Bison Futé (accidents, travaux, bouchons) et événements culturels curés,
+        limités au département de Vaucluse.
+    </p>
+</header>
+<main>
+    <section>
+        <h2>Carte de contrôle</h2>
+        <div id="map" role="img" aria-label="Carte des événements du Vaucluse"></div>
+        <p class="hint" id="map-status">Chargement des événements…</p>
+    </section>
+
+    <section>
+        <h2>API (lecture)</h2>
+        <table>
+            <tr><th>Route</th><th>Contenu</th></tr>
+            <tr><td><code>GET /api/event.json</code></td><td>FeatureCollection GeoJSON de tous les événements actifs (propriétés OEDB : <code>what</code>, <code>type</code>, <code>start</code>, <code>stop</code>, <code>label</code>, <code>source</code>…)</td></tr>
+            <tr><td><code>GET /api/event/{id}.json</code></td><td>Un événement individuel</td></tr>
+            <tr><td><code>GET /api/stats.json</code></td><td>Compteurs par catégorie et par type</td></tr>
+        </table>
+        <p>
+            Les requêtes par secteur (<code>bbox</code>, <code>what</code>, <code>when</code>) sont
+            fournies côté client par <a href="oedb-client.js"><code>oedb-client.js</code></a> :
+        </p>
+        <pre>const events = await OedbClient.fetchEvents(base, {
+    bbox: [4.6, 43.8, 5.2, 44.3],
+    what: 'traffic',
+    when: new Date()
+});</pre>
+    </section>
+
+    <section>
+        <h2>Proposer un événement</h2>
+        <div class="card">
+            <p class="hint">
+                Cliquez sur la carte ci-dessus pour renseigner la position, complétez les
+                champs puis validez : une issue GitHub pré-remplie s'ouvre. Après modération
+                (label <code>approved</code>), l'événement est intégré au prochain build.
+            </p>
+            <div class="form-grid">
+                <div>
+                    <label for="f-label">Titre</label>
+                    <input id="f-label" type="text" placeholder="Marché nocturne d'Orange">
+                </div>
+                <div>
+                    <label for="f-what">Catégorie (what)</label>
+                    <select id="f-what">
+                        <option value="culture.market.night">culture.market.night</option>
+                        <option value="culture.festival">culture.festival</option>
+                        <option value="sport.race">sport.race</option>
+                        <option value="traffic.roadwork">traffic.roadwork</option>
+                        <option value="traffic.accident">traffic.accident</option>
+                        <option value="traffic.jam">traffic.jam</option>
+                        <option value="traffic.hazard">traffic.hazard</option>
+                        <option value="traffic.info">traffic.info</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="f-start">Début (ISO 8601)</label>
+                    <input id="f-start" type="text" placeholder="2026-08-13T18:00:00+02:00">
+                </div>
+                <div>
+                    <label for="f-stop">Fin (ISO 8601)</label>
+                    <input id="f-stop" type="text" placeholder="2026-08-13T23:00:00+02:00">
+                </div>
+                <div>
+                    <label for="f-lat">Latitude</label>
+                    <input id="f-lat" type="text" placeholder="44.1380">
+                </div>
+                <div>
+                    <label for="f-lon">Longitude</label>
+                    <input id="f-lon" type="text" placeholder="4.8075">
+                </div>
+                <div>
+                    <label for="f-source">Source (URL)</label>
+                    <input id="f-source" type="url" placeholder="https://…">
+                </div>
+            </div>
+            <button class="btn" id="f-submit" type="button">Créer l'issue pré-remplie</button>
+        </div>
+    </section>
+
+    <section>
+        <h2>Écriture : différence assumée avec l'instance dynamique</h2>
+        <p>
+            L'API OEDB de référence expose <code>POST /event</code>. Cette instance étant
+            statique, le chemin d'écriture passe par une issue GitHub (formulaire
+            ci-dessus) modérée par le label <code>approved</code>, puis intégrée au build
+            suivant. Voir le <a href="https://github.com/thepriben/oedb-rs#readme">README</a>.
+        </p>
+    </section>
+</main>
+<footer>
+    <a href="https://github.com/thepriben/oedb-rs">github.com/thepriben/oedb-rs</a> ·
+    consommé par <a href="https://thepriben.github.io/dataroads-FR84/">dataroads-FR84</a>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="oedb-client.js"></script>
+<script>
+    const map = L.map('map').setView([44.05, 5.05], 9);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    const WHAT_COLORS = {
+        'traffic.accident': '#DC2626',
+        'traffic.roadwork': '#F59E0B',
+        'traffic.jam': '#B91C1C',
+        'traffic.hazard': '#9333EA',
+        'weather.road': '#0284C7',
+        'culture': '#059669'
+    };
+    function colorFor(what) {
+        if (WHAT_COLORS[what]) return WHAT_COLORS[what];
+        if (String(what).startsWith('culture')) return WHAT_COLORS.culture;
+        return '#4B5563';
+    }
+
+    let picker = null;
+    map.on('click', (e) => {
+        document.getElementById('f-lat').value = e.latlng.lat.toFixed(5);
+        document.getElementById('f-lon').value = e.latlng.lng.toFixed(5);
+        if (picker) picker.remove();
+        picker = L.marker(e.latlng).addTo(map).bindTooltip('Position de l\'événement proposé');
+    });
+
+    OedbClient.fetchCollection('.').then((collection) => {
+        const status = document.getElementById('map-status');
+        (collection.features || []).forEach((feature) => {
+            const [lon, lat] = feature.geometry.coordinates;
+            const props = feature.properties || {};
+            L.circleMarker([lat, lon], {
+                radius: 7,
+                color: '#fff',
+                weight: 1.5,
+                fillColor: colorFor(props.what),
+                fillOpacity: 0.9
+            }).addTo(map).bindPopup(
+                `<strong>${props.label || props.id}</strong><br>` +
+                `<code>${props.what}</code> · ${props.type}<br>` +
+                (props.start ? `Du ${props.start}<br>` : '') +
+                (props.stop ? `au ${props.stop}<br>` : '') +
+                `Source : ${props.source || '?'}`
+            );
+        });
+        const generated = collection._cache ? collection._cache.generated_at : '?';
+        status.textContent = `${(collection.features || []).length} événement(s) — généré le ${generated}`;
+    }).catch((error) => {
+        document.getElementById('map-status').textContent =
+            `Collection indisponible (${error.message}) — premier build en attente ?`;
+    });
+
+    document.getElementById('f-submit').addEventListener('click', () => {
+        const value = (id) => document.getElementById(id).value.trim();
+        const params = new URLSearchParams({
+            template: 'event.yml',
+            labels: 'event',
+            title: `[event] ${value('f-label') || 'Nouvel événement'}`,
+            label: value('f-label'),
+            what: value('f-what'),
+            start: value('f-start'),
+            stop: value('f-stop'),
+            lat: value('f-lat'),
+            lon: value('f-lon'),
+            source: value('f-source')
+        });
+        window.open(`https://github.com/thepriben/oedb-rs/issues/new?${params}`, '_blank', 'noopener');
+    });
+</script>
+</body>
+</html>

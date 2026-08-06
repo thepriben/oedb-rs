@@ -1,0 +1,20 @@
+[package]
+name = "oedb-build"
+version = "0.1.0"
+edition = "2021"
+description = "Static OpenEventDatabase-compatible instance generator for Vaucluse (FR-84)"
+license = "MIT"
+repository = "https://github.com/thepriben/oedb-rs"
+
+[dependencies]
+anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
+roxmltree = "0.20"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+ureq = { version = "2", features = ["json"] }
+
+[[bin]]
+name = "oedb-build"
+path = "src/main.rs"

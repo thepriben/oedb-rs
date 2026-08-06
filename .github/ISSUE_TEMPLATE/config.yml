@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Formulaire de proposition (carte)
+    url: https://thepriben.github.io/oedb-rs/
+    about: Formulaire avec sélection de la position sur carte, qui pré-remplit l'issue.
