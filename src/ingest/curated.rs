@@ -27,6 +27,15 @@ pub struct CuratedEvent {
     pub source: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub created: Option<String>,
+    /// Optional Wikidata QID of the event/series itself.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wikidata: Option<String>,
+    /// Optional Wikidata QID of the event-type concept (e.g. Q1962840 night market).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub type_wikidata: Option<String>,
+    /// Optional Wikidata QID of the place (e.g. Q187796 Orange).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub place_wikidata: Option<String>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub tags: BTreeMap<String, String>,
 }
@@ -73,6 +82,9 @@ impl CuratedEvent {
             source: self.source.unwrap_or_else(|| "curation oedb-rs".to_string()),
             createdate: created,
             lastupdate: created,
+            wikidata: self.wikidata,
+            type_wikidata: self.type_wikidata,
+            place_wikidata: self.place_wikidata,
             tags: self.tags,
         };
         event.validate().map_err(anyhow::Error::msg)?;

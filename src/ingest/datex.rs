@@ -243,6 +243,9 @@ fn record_to_event(record: Node, now: DateTime<Utc>) -> Option<Event> {
         source: "Bison Futé / DIR (DATEX II)".into(),
         createdate: created,
         lastupdate: updated,
+        wikidata: None,
+        type_wikidata: None,
+        place_wikidata: None,
         tags,
     })
 }

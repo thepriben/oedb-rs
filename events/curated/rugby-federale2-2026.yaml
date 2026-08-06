@@ -1,0 +1,38 @@
+# Rugby à XV — Fédérale 2, poule 3, journée 1 de la saison 2026-2027.
+# Deux clubs vauclusiens reçoivent le dimanche 13 septembre 2026 à 15h15 :
+#   - Avignon Le Pontet Rugby vs RO Grasse (stade de Fargues, Le Pontet)
+#   - Stade Union Cavaillonnais vs SO Voiron (stade de rugby, Cavaillon)
+# Source calendrier : https://www.rugbyrama.fr/resultats/rugby/federale-2/calendrier
+# Wikidata : Q47089371 = match de rugby à XV ; Q225501 = Le Pontet ; Q208798 = Cavaillon.
+
+- id: rugby-f2-2026-09-13-lepontet-grasse
+  what: sport.rugby.match
+  type: scheduled
+  label: "Rugby Fédérale 2 — Avignon Le Pontet Rugby vs RO Grasse (J1)"
+  start: 2026-09-13T15:15:00+02:00
+  stop: 2026-09-13T17:15:00+02:00
+  lon: 4.8596
+  lat: 43.9553
+  source: https://www.rugbyrama.fr/resultats/rugby/federale-2/calendrier
+  type_wikidata: Q47089371  # match de rugby à XV
+  place_wikidata: Q225501   # Le Pontet (Vaucluse)
+  tags:
+    commune: Le Pontet
+    lieu: "Stade de Fargues"
+    competition: "Fédérale 2 — poule 3, saison 2026-2027"
+
+- id: rugby-f2-2026-09-13-cavaillon-voiron
+  what: sport.rugby.match
+  type: scheduled
+  label: "Rugby Fédérale 2 — SU Cavaillonnais vs SO Voiron (J1)"
+  start: 2026-09-13T15:15:00+02:00
+  stop: 2026-09-13T17:15:00+02:00
+  lon: 5.0525
+  lat: 43.8335
+  source: https://www.rugbyrama.fr/resultats/rugby/federale-2/calendrier
+  type_wikidata: Q47089371  # match de rugby à XV
+  place_wikidata: Q208798   # Cavaillon (Vaucluse)
+  tags:
+    commune: Cavaillon
+    lieu: "Stade de rugby de Cavaillon"
+    competition: "Fédérale 2 — poule 3, saison 2026-2027"

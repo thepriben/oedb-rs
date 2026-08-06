@@ -97,7 +97,8 @@ fn main() -> Result<()> {
         println!("OEDB_OFFLINE=1: réseau désactivé");
     }
 
-    let consolidated = emit::consolidate(events, now);
+    let mut consolidated = emit::consolidate(events, now);
+    emit::spread_shared_locations(&mut consolidated);
     let summary = emit::emit(&out, &consolidated, now)?;
     copy_site(&out)?;
 

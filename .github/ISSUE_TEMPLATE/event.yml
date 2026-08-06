@@ -24,6 +24,8 @@ body:
       options:
         - culture.market.night
         - culture.festival
+        - sport.rugby.match
+        - sport.football.match
         - sport.race
         - traffic.roadwork
         - traffic.accident
@@ -40,6 +42,18 @@ body:
         - scheduled
         - unscheduled
       default: 0
+  - type: input
+    id: type_wikidata
+    attributes:
+      label: Type Wikidata (QID, optionnel)
+      description: QID Wikidata du type d'événement, p. ex. `Q1962840` (marché nocturne). Le formulaire du site le remplit par autocomplétion ; « Libellé (QID) » est accepté.
+      placeholder: "Q1962840"
+  - type: input
+    id: place_wikidata
+    attributes:
+      label: Lieu Wikidata (QID, optionnel)
+      description: QID Wikidata du lieu, p. ex. `Q187796` (Orange).
+      placeholder: "Q187796"
   - type: input
     id: start
     attributes:

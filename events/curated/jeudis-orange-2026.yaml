@@ -12,6 +12,8 @@
   lon: 4.8075
   lat: 44.1380
   source: https://www.ville-orange.fr/article2431.html
+  type_wikidata: Q1962840   # marché nocturne (night market)
+  place_wikidata: Q187796   # Orange (Vaucluse)
   tags:
     commune: Orange
     lieu: "Centre-ville"
@@ -25,6 +27,8 @@
   lon: 4.8075
   lat: 44.1380
   source: https://www.ville-orange.fr/article2431.html
+  type_wikidata: Q1962840   # marché nocturne (night market)
+  place_wikidata: Q187796   # Orange (Vaucluse)
   tags:
     commune: Orange
     lieu: "Centre-ville"
@@ -38,6 +42,8 @@
   lon: 4.8075
   lat: 44.1380
   source: https://www.ville-orange.fr/article2431.html
+  type_wikidata: Q1962840   # marché nocturne (night market)
+  place_wikidata: Q187796   # Orange (Vaucluse)
   tags:
     commune: Orange
     lieu: "Centre-ville"
@@ -51,6 +57,8 @@
   lon: 4.8075
   lat: 44.1380
   source: https://www.ville-orange.fr/article2431.html
+  type_wikidata: Q1962840   # marché nocturne (night market)
+  place_wikidata: Q187796   # Orange (Vaucluse)
   tags:
     commune: Orange
     lieu: "Centre-ville"

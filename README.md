@@ -13,10 +13,33 @@ Consommée par la couche « Événements » de
 | Source | Catégories OEDB (`what`) | Rythme |
 |---|---|---|
 | [Bison Futé / DIR](http://tipi.bison-fute.gouv.fr/) (flux DATEX II, filtré Vaucluse) | `traffic.accident`, `traffic.roadwork`, `traffic.jam`, `traffic.hazard`, `weather.road`, `traffic.info` | build toutes les 3 h |
-| Curation manuelle (`events/curated/*.yaml`) — ex. [Jeudis d'Orange](https://www.ville-orange.fr/article2431.html) | `culture.market.night`, … | à chaque build |
+| Curation manuelle (`events/curated/*.yaml`) — ex. [Jeudis d'Orange](https://www.ville-orange.fr/article2431.html), matchs de rugby [Fédérale 2](https://www.rugbyrama.fr/resultats/rugby/federale-2/calendrier) (Avignon Le Pontet, Cavaillon) | `culture.market.night`, `sport.rugby.match`, … | à chaque build |
 | Issues GitHub étiquetées `event` + `approved` (formulaire) | toutes | à chaque build |
 
 Les événements expirés (`stop` passé depuis plus de 24 h) sont purgés à chaque build.
+
+## Liaison Wikidata (optionnelle)
+
+Chaque événement peut porter jusqu'à trois QID Wikidata, émis dans les propriétés
+GeoJSON quand ils sont renseignés :
+
+| Propriété | Sens | Exemple |
+|---|---|---|
+| `type_wikidata` | Le *type* d'événement | [`Q1962840`](https://www.wikidata.org/wiki/Q1962840) (marché nocturne) |
+| `place_wikidata` | Le lieu | [`Q187796`](https://www.wikidata.org/wiki/Q187796) (Orange) |
+| `wikidata` | L'événement ou la série elle-même | un festival précis, si l'entité existe |
+
+Tout fonctionne **sans** Wikidata : les champs sont optionnels et la taxonomie OEDB
+`what` reste le classifieur obligatoire. Le formulaire du site propose une
+autocomplétion (`wbsearchentities`) pour remplir ces champs sans connaître les QID.
+
+## Étalement des points partagés
+
+Les événements aux coordonnées strictement identiques (ex. les quatre soirées des
+Jeudis d'Orange, toutes place du centre-ville) sont répartis à chaque build sur un
+petit cercle déterministe (~25 m, tri par id) : chaque occurrence a sa propre
+position, stable d'un build à l'autre, et la carte de contrôle les regroupe en
+grappes au dézoom.
 
 ## API (lecture, compatible OEDB)
 
@@ -91,8 +114,13 @@ Consumed by the “Events” layer of [dataroads-FR84](https://github.com/thepri
 - **Data sources**: Bison Futé DATEX II feed filtered on Vaucluse (`traffic.*`),
   manually curated YAML events (e.g. the
   [Jeudis d'Orange](https://www.ville-orange.fr/article2431.html) night markets,
-  `culture.market.night`), and approved GitHub issues. Expired events are purged
-  at every build (every 3 hours).
+  `culture.market.night`, and Fédérale 2 rugby matches, `sport.rugby.match`), and
+  approved GitHub issues. Expired events are purged at every build (every 3 hours).
+- **Optional Wikidata linkage**: events may carry `wikidata`, `type_wikidata` and
+  `place_wikidata` QIDs, emitted as GeoJSON properties; the submission form offers
+  Wikidata autocomplete. Everything works without them.
+- **Shared-point spreading**: events with identical coordinates are deterministically
+  spread on a ~25 m circle so each occurrence gets its own stable position.
 
 ## Licence / License
 

@@ -6,14 +6,15 @@
     <title>oedb-rs — Instance OpenEventDatabase statique du Vaucluse (FR-84)</title>
     <meta name="description" content="Instance OpenEventDatabase statique pour le Vaucluse : événements routiers Bison Futé et événements culturels, générés en Rust et servis par GitHub Pages.">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
     <style>
         :root {
-            --ink: #1F2937;
-            --muted: #6B7280;
-            --accent: #4F46E5;
-            --bg: #F9FAFB;
-            --card: #FFFFFF;
-            --border: #E5E7EB;
+            --ink: #24292F;
+            --muted: #6E7781;
+            --accent: #2F4858;
+            --border: #D8DEE4;
+            --bg: #FFFFFF;
+            --soft: #F6F8FA;
         }
         * { box-sizing: border-box; }
         body {
@@ -22,80 +23,135 @@
             color: var(--ink);
             background: var(--bg);
             line-height: 1.6;
+            font-size: 15px;
         }
         header {
-            background: linear-gradient(135deg, #312E81, #4F46E5);
-            color: #fff;
-            padding: 40px 24px 32px;
+            border-bottom: 1px solid var(--border);
+            padding: 28px 24px 22px;
         }
-        header h1 { margin: 0 0 8px; font-size: 1.7rem; }
-        header p { margin: 0; opacity: 0.9; max-width: 720px; }
-        main { max-width: 960px; margin: 0 auto; padding: 24px; }
-        section { margin-bottom: 32px; }
-        h2 { font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+        header .inner, main { max-width: 880px; margin: 0 auto; }
+        header h1 { margin: 0 0 6px; font-size: 1.35rem; font-weight: 600; letter-spacing: -0.01em; }
+        header p { margin: 0; color: var(--muted); max-width: 680px; font-size: 0.92rem; }
+        main { padding: 8px 24px 40px; }
+        section { margin: 30px 0; }
+        h2 {
+            font-size: 1.02rem;
+            font-weight: 600;
+            margin: 0 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
         code, pre {
-            background: #EEF2FF;
-            border-radius: 6px;
+            background: var(--soft);
+            border-radius: 5px;
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.88em;
+            font-size: 0.86em;
         }
-        code { padding: 2px 6px; }
-        pre { padding: 12px 16px; overflow-x: auto; }
-        table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
-        th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
-        th { background: #EEF2FF; }
-        #map { height: 380px; border-radius: 10px; border: 1px solid var(--border); }
-        .card {
-            background: var(--card);
+        code { padding: 2px 5px; }
+        pre { padding: 12px 14px; overflow-x: auto; border: 1px solid var(--border); }
+        table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+        th, td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; }
+        th { background: var(--soft); font-weight: 600; }
+        a { color: var(--accent); }
+        #map {
+            height: 420px;
+            border-radius: 8px;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px;
+            background: var(--soft);
         }
+        .hint { color: var(--muted); font-size: 0.84rem; }
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px 18px;
         }
-        .form-grid label { display: block; font-weight: 600; font-size: 0.86rem; margin-bottom: 4px; }
-        .form-grid input, .form-grid select {
+        .field label { display: block; font-weight: 600; font-size: 0.82rem; margin-bottom: 4px; }
+        .field label .opt { color: var(--muted); font-weight: 400; }
+        .field input, .field select {
             width: 100%;
-            padding: 8px 10px;
+            padding: 7px 10px;
             border: 1px solid var(--border);
             border-radius: 6px;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
+            background: #fff;
+            color: var(--ink);
         }
-        .hint { color: var(--muted); font-size: 0.85rem; }
+        .field input:focus, .field select:focus { outline: 2px solid #B6C2CC; border-color: var(--accent); }
+        .wd-wrap { position: relative; }
+        .wd-list {
+            position: absolute;
+            z-index: 1200;
+            left: 0; right: 0; top: 100%;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 6px 16px rgba(36, 41, 47, 0.12);
+            max-height: 230px;
+            overflow-y: auto;
+            display: none;
+        }
+        .wd-item { padding: 7px 10px; cursor: pointer; font-size: 0.86rem; }
+        .wd-item:hover, .wd-item.active { background: var(--soft); }
+        .wd-item .wd-desc { color: var(--muted); font-size: 0.8rem; display: block; }
+        .wd-item .wd-qid { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 0.78rem; }
+        .wd-picked { margin-top: 4px; font-size: 0.8rem; color: var(--accent); }
+        .wd-picked button {
+            border: none; background: none; color: var(--muted);
+            cursor: pointer; font-size: 0.8rem; padding: 0 4px;
+        }
         .btn {
             display: inline-block;
-            margin-top: 16px;
+            margin-top: 18px;
             background: var(--accent);
             color: #fff;
             border: none;
-            border-radius: 8px;
-            padding: 10px 18px;
-            font-size: 0.95rem;
+            border-radius: 6px;
+            padding: 9px 18px;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
-            text-decoration: none;
         }
-        .btn:hover { background: #4338CA; }
-        footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 24px; }
-        a { color: var(--accent); }
+        .btn:hover { background: #253A47; }
+        footer {
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.82rem;
+            padding: 20px;
+        }
+        footer a { color: var(--muted); }
+        .oedb-cluster {
+            background: rgba(47, 72, 88, 0.92);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(36, 41, 47, 0.35);
+        }
+        .leaflet-popup-content { font-size: 0.86rem; }
+        .pop-what { color: var(--muted); margin: 2px 0 6px; }
+        .pop-wd { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); font-size: 0.82rem; }
     </style>
 </head>
 <body>
 <header>
-    <h1>oedb-rs — événements du Vaucluse (FR-84)</h1>
-    <p>
-        Instance <a href="https://github.com/openeventdatabase/backend" style="color:#C7D2FE;">OpenEventDatabase</a>
-        statique, générée en Rust et servie par GitHub Pages : événements routiers
-        Bison Futé (accidents, travaux, bouchons) et événements culturels curés,
-        limités au département de Vaucluse.
-    </p>
+    <div class="inner">
+        <h1>oedb-rs — événements du Vaucluse (FR-84)</h1>
+        <p>
+            Instance <a href="https://github.com/openeventdatabase/backend">OpenEventDatabase</a>
+            statique, générée en Rust et servie par GitHub Pages. Événements routiers Bison Futé
+            (filtrés sur la limite réelle du département) et événements culturels curés,
+            avec liaison <a href="https://www.wikidata.org/">Wikidata</a> optionnelle.
+        </p>
+    </div>
 </header>
 <main>
     <section>
-        <h2>Carte de contrôle</h2>
+        <h2>Carte</h2>
         <div id="map" role="img" aria-label="Carte des événements du Vaucluse"></div>
         <p class="hint" id="map-status">Chargement des événements…</p>
     </section>
@@ -104,108 +160,147 @@
         <h2>API (lecture)</h2>
         <table>
             <tr><th>Route</th><th>Contenu</th></tr>
-            <tr><td><code>GET /api/event.json</code></td><td>FeatureCollection GeoJSON de tous les événements actifs (propriétés OEDB : <code>what</code>, <code>type</code>, <code>start</code>, <code>stop</code>, <code>label</code>, <code>source</code>…)</td></tr>
+            <tr><td><code>GET /api/event.json</code></td><td>FeatureCollection GeoJSON des événements actifs (propriétés OEDB : <code>what</code>, <code>type</code>, <code>start</code>, <code>stop</code>, <code>label</code>, <code>source</code> — plus, si renseignés, <code>wikidata</code>, <code>type_wikidata</code>, <code>place_wikidata</code>)</td></tr>
             <tr><td><code>GET /api/event/{id}.json</code></td><td>Un événement individuel</td></tr>
             <tr><td><code>GET /api/stats.json</code></td><td>Compteurs par catégorie et par type</td></tr>
         </table>
-        <p>
-            Les requêtes par secteur (<code>bbox</code>, <code>what</code>, <code>when</code>) sont
-            fournies côté client par <a href="oedb-client.js"><code>oedb-client.js</code></a> :
+        <p class="hint">
+            Requêtes par secteur (<code>bbox</code>, <code>what</code>, <code>when</code>) côté client via
+            <a href="oedb-client.js"><code>oedb-client.js</code></a>. Les événements partageant un même
+            point sont légèrement étalés (~25 m) et regroupés en grappes au dézoom.
         </p>
-        <pre>const events = await OedbClient.fetchEvents(base, {
-    bbox: [4.6, 43.8, 5.2, 44.3],
-    what: 'traffic',
-    when: new Date()
-});</pre>
     </section>
 
     <section>
         <h2>Proposer un événement</h2>
-        <div class="card">
-            <p class="hint">
-                Cliquez sur la carte ci-dessus pour renseigner la position, complétez les
-                champs puis validez : une issue GitHub pré-remplie s'ouvre. Après modération
-                (label <code>approved</code>), l'événement est intégré au prochain build.
-            </p>
-            <div class="form-grid">
-                <div>
-                    <label for="f-label">Titre</label>
-                    <input id="f-label" type="text" placeholder="Marché nocturne d'Orange">
-                </div>
-                <div>
-                    <label for="f-what">Catégorie (what)</label>
-                    <select id="f-what">
-                        <option value="culture.market.night">culture.market.night</option>
-                        <option value="culture.festival">culture.festival</option>
-                        <option value="sport.race">sport.race</option>
-                        <option value="traffic.roadwork">traffic.roadwork</option>
-                        <option value="traffic.accident">traffic.accident</option>
-                        <option value="traffic.jam">traffic.jam</option>
-                        <option value="traffic.hazard">traffic.hazard</option>
-                        <option value="traffic.info">traffic.info</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="f-start">Début (ISO 8601)</label>
-                    <input id="f-start" type="text" placeholder="2026-08-13T18:00:00+02:00">
-                </div>
-                <div>
-                    <label for="f-stop">Fin (ISO 8601)</label>
-                    <input id="f-stop" type="text" placeholder="2026-08-13T23:00:00+02:00">
-                </div>
-                <div>
-                    <label for="f-lat">Latitude</label>
-                    <input id="f-lat" type="text" placeholder="44.1380">
-                </div>
-                <div>
-                    <label for="f-lon">Longitude</label>
-                    <input id="f-lon" type="text" placeholder="4.8075">
-                </div>
-                <div>
-                    <label for="f-source">Source (URL)</label>
-                    <input id="f-source" type="url" placeholder="https://…">
-                </div>
+        <p class="hint">
+            Cliquez sur la carte pour renseigner la position. Les champs Wikidata sont
+            optionnels : recherchez par libellé (autocomplétion) ou laissez vide — tout
+            fonctionne sans. La validation crée une issue GitHub pré-remplie, intégrée
+            au prochain build après modération (label <code>approved</code>).
+        </p>
+        <div class="form-grid">
+            <div class="field">
+                <label for="f-label">Titre</label>
+                <input id="f-label" type="text" placeholder="Marché nocturne d'Orange">
             </div>
-            <button class="btn" id="f-submit" type="button">Créer l'issue pré-remplie</button>
+            <div class="field">
+                <label for="f-what">Catégorie OEDB (what)</label>
+                <select id="f-what">
+                    <option value="culture.market.night">culture.market.night</option>
+                    <option value="culture.festival">culture.festival</option>
+                    <option value="sport.rugby.match">sport.rugby.match</option>
+                    <option value="sport.football.match">sport.football.match</option>
+                    <option value="sport.race">sport.race</option>
+                    <option value="traffic.roadwork">traffic.roadwork</option>
+                    <option value="traffic.accident">traffic.accident</option>
+                    <option value="traffic.jam">traffic.jam</option>
+                    <option value="traffic.hazard">traffic.hazard</option>
+                    <option value="traffic.info">traffic.info</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="f-type-wd">Type Wikidata <span class="opt">(optionnel)</span></label>
+                <div class="wd-wrap">
+                    <input id="f-type-wd" type="text" placeholder="ex. marché nocturne" autocomplete="off">
+                    <div class="wd-list" id="f-type-wd-list"></div>
+                </div>
+                <div class="wd-picked" id="f-type-wd-picked" hidden></div>
+            </div>
+            <div class="field">
+                <label for="f-place-wd">Lieu Wikidata <span class="opt">(optionnel)</span></label>
+                <div class="wd-wrap">
+                    <input id="f-place-wd" type="text" placeholder="ex. Orange" autocomplete="off">
+                    <div class="wd-list" id="f-place-wd-list"></div>
+                </div>
+                <div class="wd-picked" id="f-place-wd-picked" hidden></div>
+            </div>
+            <div class="field">
+                <label for="f-start">Début (ISO 8601)</label>
+                <input id="f-start" type="text" placeholder="2026-08-13T18:00:00+02:00">
+            </div>
+            <div class="field">
+                <label for="f-stop">Fin (ISO 8601)</label>
+                <input id="f-stop" type="text" placeholder="2026-08-13T23:00:00+02:00">
+            </div>
+            <div class="field">
+                <label for="f-lat">Latitude</label>
+                <input id="f-lat" type="text" placeholder="44.1380">
+            </div>
+            <div class="field">
+                <label for="f-lon">Longitude</label>
+                <input id="f-lon" type="text" placeholder="4.8075">
+            </div>
+            <div class="field">
+                <label for="f-source">Source (URL)</label>
+                <input id="f-source" type="url" placeholder="https://…">
+            </div>
         </div>
+        <button class="btn" id="f-submit" type="button">Créer l'issue pré-remplie</button>
     </section>
 
     <section>
         <h2>Écriture : différence assumée avec l'instance dynamique</h2>
-        <p>
-            L'API OEDB de référence expose <code>POST /event</code>. Cette instance étant
-            statique, le chemin d'écriture passe par une issue GitHub (formulaire
-            ci-dessus) modérée par le label <code>approved</code>, puis intégrée au build
-            suivant. Voir le <a href="https://github.com/thepriben/oedb-rs#readme">README</a>.
+        <p class="hint">
+            L'API OEDB de référence expose <code>POST /event</code>. Cette instance étant statique,
+            l'écriture passe par une issue GitHub modérée (label <code>approved</code>), intégrée au
+            build suivant. Voir le <a href="https://github.com/thepriben/oedb-rs#readme">README</a>.
         </p>
     </section>
 </main>
 <footer>
-    <a href="https://github.com/thepriben/oedb-rs">github.com/thepriben/oedb-rs</a> ·
-    consommé par <a href="https://thepriben.github.io/dataroads-FR84/">dataroads-FR84</a>
+    <a href="https://github.com/thepriben/oedb-rs">github.com/thepriben/oedb-rs</a>
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="oedb-client.js"></script>
 <script>
-    const map = L.map('map').setView([44.05, 5.05], 9);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    // ---- Carte cadrée sur le Vaucluse, fond sobre CARTO Positron ----
+    const VAUCLUSE_BOUNDS = L.latLngBounds([43.55, 4.40], [44.55, 5.95]);
+    const map = L.map('map', {
+        maxBounds: VAUCLUSE_BOUNDS.pad(0.15),
+        maxBoundsViscosity: 0.9,
+        minZoom: 9,
+        maxZoom: 18
+    });
+    map.fitBounds(VAUCLUSE_BOUNDS.pad(-0.05));
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd'
     }).addTo(map);
 
     const WHAT_COLORS = {
-        'traffic.accident': '#DC2626',
-        'traffic.roadwork': '#F59E0B',
-        'traffic.jam': '#B91C1C',
-        'traffic.hazard': '#9333EA',
-        'weather.road': '#0284C7',
-        'culture': '#059669'
+        'traffic.accident': '#B3423A',
+        'traffic.roadwork': '#B07D2B',
+        'traffic.jam': '#8C3330',
+        'traffic.hazard': '#6B4F8E',
+        'weather.road': '#33698C',
+        'culture': '#3E7A5E',
+        'sport': '#3E5E8C'
     };
     function colorFor(what) {
         if (WHAT_COLORS[what]) return WHAT_COLORS[what];
         if (String(what).startsWith('culture')) return WHAT_COLORS.culture;
-        return '#4B5563';
+        if (String(what).startsWith('sport')) return WHAT_COLORS.sport;
+        return '#5A6570';
     }
+
+    function wikidataLink(qid, text) {
+        return `<a href="https://www.wikidata.org/wiki/${qid}" target="_blank" rel="noopener noreferrer">${text} (${qid})</a>`;
+    }
+
+    // ---- Grappes sobres ----
+    const clusters = L.markerClusterGroup({
+        maxClusterRadius: 42,
+        showCoverageOnHover: false,
+        iconCreateFunction: (cluster) => L.divIcon({
+            html: `<div class="oedb-cluster" style="width:30px;height:30px;">${cluster.getChildCount()}</div>`,
+            className: '',
+            iconSize: [30, 30]
+        })
+    });
+    map.addLayer(clusters);
 
     let picker = null;
     map.on('click', (e) => {
@@ -220,19 +315,28 @@
         (collection.features || []).forEach((feature) => {
             const [lon, lat] = feature.geometry.coordinates;
             const props = feature.properties || {};
-            L.circleMarker([lat, lon], {
+            const marker = L.circleMarker([lat, lon], {
                 radius: 7,
                 color: '#fff',
                 weight: 1.5,
                 fillColor: colorFor(props.what),
-                fillOpacity: 0.9
-            }).addTo(map).bindPopup(
-                `<strong>${props.label || props.id}</strong><br>` +
-                `<code>${props.what}</code> · ${props.type}<br>` +
+                fillOpacity: 0.92
+            });
+
+            const wd = [];
+            if (props.type_wikidata) wd.push(wikidataLink(props.type_wikidata, 'type'));
+            if (props.place_wikidata) wd.push(wikidataLink(props.place_wikidata, 'lieu'));
+            if (props.wikidata) wd.push(wikidataLink(props.wikidata, 'événement'));
+
+            marker.bindPopup(
+                `<strong>${props.label || props.id}</strong>` +
+                `<div class="pop-what"><code>${props.what}</code> · ${props.type}</div>` +
                 (props.start ? `Du ${props.start}<br>` : '') +
                 (props.stop ? `au ${props.stop}<br>` : '') +
-                `Source : ${props.source || '?'}`
+                `Source : ${props.source || '?'}` +
+                (wd.length ? `<div class="pop-wd">Wikidata : ${wd.join(' · ')}</div>` : '')
             );
+            clusters.addLayer(marker);
         });
         const generated = collection._cache ? collection._cache.generated_at : '?';
         status.textContent = `${(collection.features || []).length} événement(s) — généré le ${generated}`;
@@ -240,6 +344,74 @@
         document.getElementById('map-status').textContent =
             `Collection indisponible (${error.message}) — premier build en attente ?`;
     });
+
+    // ---- Autocomplete Wikidata réutilisable (optionnel : tout marche sans) ----
+    function attachWikidataAutocomplete(inputId) {
+        const input = document.getElementById(inputId);
+        const list = document.getElementById(`${inputId}-list`);
+        const picked = document.getElementById(`${inputId}-picked`);
+        let qid = '';
+        let label = '';
+        let timer = null;
+
+        function clearPick() {
+            qid = ''; label = '';
+            picked.hidden = true;
+            picked.innerHTML = '';
+        }
+        function setPick(id, lbl) {
+            qid = id; label = lbl;
+            picked.hidden = false;
+            picked.innerHTML = `Lié à <strong>${lbl}</strong> <span class="wd-qid">(${id})</span> <button type="button" aria-label="Retirer le lien Wikidata">×</button>`;
+            picked.querySelector('button').addEventListener('click', () => { clearPick(); input.value = ''; });
+            list.style.display = 'none';
+        }
+
+        input.addEventListener('input', () => {
+            clearPick();
+            clearTimeout(timer);
+            const query = input.value.trim();
+            if (query.length < 2) { list.style.display = 'none'; return; }
+            timer = setTimeout(async () => {
+                try {
+                    const url = 'https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&origin=*'
+                        + `&language=fr&uselang=fr&type=item&limit=7&search=${encodeURIComponent(query)}`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    const results = (data.search || []);
+                    if (!results.length) { list.style.display = 'none'; return; }
+                    list.innerHTML = results.map((r) =>
+                        `<div class="wd-item" data-qid="${r.id}" data-label="${(r.label || r.id).replace(/"/g, '&quot;')}">`
+                        + `${r.label || r.id} <span class="wd-qid">${r.id}</span>`
+                        + (r.description ? `<span class="wd-desc">${r.description}</span>` : '')
+                        + '</div>').join('');
+                    list.style.display = 'block';
+                    list.querySelectorAll('.wd-item').forEach((item) => {
+                        item.addEventListener('mousedown', (event) => {
+                            event.preventDefault();
+                            input.value = item.dataset.label;
+                            setPick(item.dataset.qid, item.dataset.label);
+                        });
+                    });
+                } catch (_error) {
+                    // Wikidata injoignable : on continue sans, champ libre.
+                    list.style.display = 'none';
+                }
+            }, 250);
+        });
+        input.addEventListener('blur', () => setTimeout(() => { list.style.display = 'none'; }, 150));
+
+        return {
+            /** "Label (QID)" si lié, sinon texte libre éventuel (le parseur côté build est tolérant). */
+            value() {
+                if (qid) return `${label} (${qid})`;
+                return '';
+            }
+        };
+    }
+
+    const typeWd = attachWikidataAutocomplete('f-type-wd');
+    const placeWd = attachWikidataAutocomplete('f-place-wd');
 
     document.getElementById('f-submit').addEventListener('click', () => {
         const value = (id) => document.getElementById(id).value.trim();
@@ -255,6 +427,10 @@
             lon: value('f-lon'),
             source: value('f-source')
         });
+        const typeValue = typeWd.value();
+        const placeValue = placeWd.value();
+        if (typeValue) params.set('type_wikidata', typeValue);
+        if (placeValue) params.set('place_wikidata', placeValue);
         window.open(`https://github.com/thepriben/oedb-rs/issues/new?${params}`, '_blank', 'noopener');
     });
 </script>

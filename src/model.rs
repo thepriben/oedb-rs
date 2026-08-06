@@ -43,8 +43,22 @@ pub struct Event {
     pub source: String,
     pub createdate: DateTime<Utc>,
     pub lastupdate: DateTime<Utc>,
+    /// Wikidata QID of the event itself/series (e.g. a specific festival), when any.
+    pub wikidata: Option<String>,
+    /// Wikidata QID of the *kind* of event (e.g. Q1962840 « night market »).
+    pub type_wikidata: Option<String>,
+    /// Wikidata QID of the place (e.g. Q187796 « Orange »).
+    pub place_wikidata: Option<String>,
     /// Free-form extra properties (road name, commune, description...).
     pub tags: BTreeMap<String, String>,
+}
+
+/// A Wikidata item id looks like `Q` followed by digits (no leading zero).
+pub fn is_valid_qid(value: &str) -> bool {
+    let mut chars = value.chars();
+    matches!(chars.next(), Some('Q'))
+        && matches!(chars.clone().next(), Some(c) if c.is_ascii_digit() && c != '0')
+        && chars.all(|c| c.is_ascii_digit())
 }
 
 /// The OEDB taxonomy uses lowercase dotted paths (e.g. `traffic.accident`,
@@ -82,6 +96,17 @@ impl Event {
                 return Err(format!("{}: stop before start", self.id));
             }
         }
+        for (field, value) in [
+            ("wikidata", &self.wikidata),
+            ("type_wikidata", &self.type_wikidata),
+            ("place_wikidata", &self.place_wikidata),
+        ] {
+            if let Some(qid) = value {
+                if !is_valid_qid(qid) {
+                    return Err(format!("{}: invalid {field} QID `{qid}`", self.id));
+                }
+            }
+        }
         Ok(())
     }
 
@@ -116,6 +141,15 @@ impl Event {
         properties.insert("source".into(), self.source.clone().into());
         properties.insert("createdate".into(), self.createdate.to_rfc3339().into());
         properties.insert("lastupdate".into(), self.lastupdate.to_rfc3339().into());
+        for (key, value) in [
+            ("wikidata", &self.wikidata),
+            ("type_wikidata", &self.type_wikidata),
+            ("place_wikidata", &self.place_wikidata),
+        ] {
+            if let Some(qid) = value {
+                properties.insert(key.into(), qid.clone().into());
+            }
+        }
         for (key, value) in &self.tags {
             properties
                 .entry(key.clone())
@@ -149,6 +183,9 @@ mod tests {
             source: "test".into(),
             createdate: Utc.with_ymd_and_hms(2026, 8, 1, 0, 0, 0).unwrap(),
             lastupdate: Utc.with_ymd_and_hms(2026, 8, 1, 0, 0, 0).unwrap(),
+            wikidata: None,
+            type_wikidata: None,
+            place_wikidata: None,
             tags: BTreeMap::new(),
         }
     }
@@ -156,6 +193,27 @@ mod tests {
     #[test]
     fn accepts_valid_event() {
         assert!(sample().validate().is_ok());
+    }
+
+    #[test]
+    fn validates_optional_wikidata_qids() {
+        // Works entirely without Wikidata…
+        assert!(sample().validate().is_ok());
+        // …accepts well-formed QIDs…
+        let mut event = sample();
+        event.type_wikidata = Some("Q1962840".into());
+        event.place_wikidata = Some("Q187796".into());
+        assert!(event.validate().is_ok());
+        let feature = event.to_feature();
+        assert_eq!(feature["properties"]["type_wikidata"], "Q1962840");
+        assert_eq!(feature["properties"]["place_wikidata"], "Q187796");
+        // …and rejects malformed ones.
+        event.wikidata = Some("42".into());
+        assert!(event.validate().is_err());
+        assert!(is_valid_qid("Q42"));
+        assert!(!is_valid_qid("Q042"));
+        assert!(!is_valid_qid("q42"));
+        assert!(!is_valid_qid("Q"));
     }
 
     #[test]

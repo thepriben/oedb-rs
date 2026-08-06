@@ -26,6 +26,42 @@ pub fn consolidate(events: Vec<Event>, now: DateTime<Utc>) -> Vec<Event> {
     by_id.into_values().collect()
 }
 
+/// Radius (in degrees of latitude, ~25 m) of the circle used to spread events
+/// that share the exact same point.
+const SPREAD_RADIUS_DEG: f64 = 0.00025;
+
+/// Events sharing the exact same coordinates (e.g. the four Jeudis d'Orange
+/// evenings on the town square) are spread on a small deterministic circle so
+/// each occurrence gets its own position. Ordering by id keeps positions
+/// stable from build to build; map-side clustering regroups them at low zoom.
+pub fn spread_shared_locations(events: &mut [Event]) {
+    let mut groups: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
+    for (index, event) in events.iter().enumerate() {
+        let key = (
+            (event.lon * 1e5).round() as i64,
+            (event.lat * 1e5).round() as i64,
+        );
+        groups.entry(key).or_default().push(index);
+    }
+
+    for indices in groups.values() {
+        if indices.len() < 2 {
+            continue;
+        }
+        let mut ordered = indices.clone();
+        ordered.sort_by(|&a, &b| events[a].id.cmp(&events[b].id));
+        let count = ordered.len() as f64;
+        for (slot, &index) in ordered.iter().enumerate() {
+            let angle =
+                std::f64::consts::TAU * (slot as f64) / count - std::f64::consts::FRAC_PI_2;
+            // Compensate longitude by cos(lat) so the circle stays round.
+            let cos_lat = events[index].lat.to_radians().cos().max(0.1);
+            events[index].lon += SPREAD_RADIUS_DEG * angle.cos() / cos_lat;
+            events[index].lat += SPREAD_RADIUS_DEG * angle.sin();
+        }
+    }
+}
+
 fn write_json(path: &Path, value: &serde_json::Value) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).with_context(|| format!("creating {}", parent.display()))?;
@@ -114,7 +150,46 @@ mod tests {
             source: "test".into(),
             createdate: Utc.with_ymd_and_hms(2026, 8, 1, 0, 0, 0).unwrap(),
             lastupdate: Utc.with_ymd_and_hms(2026, 8, 1, 0, 0, 0).unwrap(),
+            wikidata: None,
+            type_wikidata: None,
+            place_wikidata: None,
             tags: Map::new(),
+        }
+    }
+
+    #[test]
+    fn spreads_events_sharing_a_point() {
+        let mut events = vec![event("j1", None), event("j2", None), event("j3", None), event("j4", None)];
+        let lone = event("seul", None);
+        events.push(Event { lon: 5.05, lat: 44.05, ..lone });
+
+        spread_shared_locations(&mut events);
+
+        // The lone event keeps its exact position.
+        assert_eq!(events[4].lon, 5.05);
+        assert_eq!(events[4].lat, 44.05);
+
+        // The four co-located events all get distinct positions…
+        let mut positions: Vec<(String, String)> = events[..4]
+            .iter()
+            .map(|e| (format!("{:.7}", e.lon), format!("{:.7}", e.lat)))
+            .collect();
+        positions.sort();
+        positions.dedup();
+        assert_eq!(positions.len(), 4);
+
+        // …still within ~30 m of the original point.
+        for e in &events[..4] {
+            assert!((e.lon - 4.81).abs() < 0.0005, "{} lon {}", e.id, e.lon);
+            assert!((e.lat - 44.14).abs() < 0.0005, "{} lat {}", e.id, e.lat);
+        }
+
+        // Deterministic: re-running from the same input gives the same result.
+        let mut again = vec![event("j1", None), event("j2", None), event("j3", None), event("j4", None)];
+        spread_shared_locations(&mut again);
+        for (a, b) in events[..4].iter().zip(again.iter()) {
+            assert_eq!(a.lon, b.lon);
+            assert_eq!(a.lat, b.lat);
         }
     }
 
