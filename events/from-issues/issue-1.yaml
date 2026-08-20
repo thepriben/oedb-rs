@@ -1,0 +1,13 @@
+- id: issue-1
+  what: sport.race
+  type: scheduled
+  label: Tour de France Femmes 2026 — arrivée de la 7e étape au Mont Ventoux
+  start: 2026-08-07T13:15:00+02:00
+  stop: 2026-08-07T18:00:00+02:00
+  lon: 5.278712
+  lat: 44.173425
+  source: https://www.letourfemmes.fr/fr/etape-7
+  type_wikidata: Q1542952
+  place_wikidata: Q209064
+  tags:
+    issue: '#1'
