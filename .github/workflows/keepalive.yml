@@ -1,0 +1,32 @@
+name: Keepalive
+
+# GitHub désactive automatiquement les workflows planifiés (cron) après ~60
+# jours sans activité dans le dépôt. Comme les données de cette instance sont
+# curées et peu commitées, le build « toutes les 3 h » finit par s'endormir.
+# Ce keepalive pousse un commit factice bien avant l'échéance pour garder le
+# cron de build.yml actif — sous l'identité thepriben.
+
+on:
+  schedule:
+    # Une fois par semaine, le lundi à 6h13 UTC.
+    - cron: "13 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Empêcher la mise en sommeil des workflows planifiés
+        uses: gautamkrishnar/keepalive-workflow@v2
+        with:
+          # Commit factice si le dernier commit date de plus de 45 jours.
+          time_elapsed: "45"
+          committer_username: "thepriben"
+          committer_email: "benoit.prieur@gmail.com"
+          commit_message: "chore: keepalive to keep the scheduled build active"
